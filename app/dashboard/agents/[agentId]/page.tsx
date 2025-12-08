@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useToast } from '@/components/ui/use-toast'
 import { ArrowLeft, Upload, Link as LinkIcon, FileText, Trash2, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+import { ActionsConfig } from '@/components/ai-actions/ActionsConfig'
 
 export default function AgentPage({ params }: { params: { agentId: string } }) {
   const [agent, setAgent] = useState<any>(null)
@@ -279,6 +280,7 @@ export default function AgentPage({ params }: { params: { agentId: string } }) {
         <Tabs defaultValue="training">
           <TabsList>
             <TabsTrigger value="training">Entraînement</TabsTrigger>
+            <TabsTrigger value="actions">Actions IA</TabsTrigger>
             <TabsTrigger value="settings">Paramètres</TabsTrigger>
             <TabsTrigger value="embed">Intégration</TabsTrigger>
           </TabsList>
@@ -381,6 +383,10 @@ export default function AgentPage({ params }: { params: { agentId: string } }) {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="actions">
+            <ActionsConfig agentId={params.agentId} />
           </TabsContent>
 
           <TabsContent value="settings">

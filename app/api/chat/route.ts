@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createSupabaseAdmin } from '@/lib/supabase/client'
 import { generateEmbedding, generateChatCompletion, calculateConfidence } from '@/lib/openai/client'
 import { sanitizeInput, checkRateLimit } from '@/lib/utils'
+import { detectActionIntent, extractActionParams, formatActionResponse, executeAction } from '@/lib/ai-actions'
 
 export async function POST(request: Request) {
   try {
@@ -61,6 +62,69 @@ export async function POST(request: Request) {
       role: 'user',
       content: sanitizedMessage,
     })
+
+    // Check for AI Actions
+    const { data: agentActions } = await supabaseAdmin
+      .from('ai_actions')
+      .select('*')
+      .eq('agent_id', agentId)
+      .eq('enabled', true)
+
+    let actionExecuted = false
+    let actionResponse = ''
+
+    if (agentActions && agentActions.length > 0) {
+      const enabledActionTypes = agentActions.map(a => a.action_type)
+      const detectedIntent = detectActionIntent(sanitizedMessage, enabledActionTypes)
+
+      if (detectedIntent) {
+        const matchedAction = agentActions.find(a => a.action_type === detectedIntent)
+
+        if (matchedAction) {
+          const params = extractActionParams(sanitizedMessage, detectedIntent)
+
+          const actionResult = await executeAction(matchedAction, params, {
+            userEmail: profile.email,
+            agentId,
+            conversationId: currentConversationId,
+            userMessage: sanitizedMessage,
+          })
+
+          if (actionResult.success) {
+            actionExecuted = true
+            actionResponse = formatActionResponse(detectedIntent, actionResult)
+
+            // Save action execution to messages
+            await supabaseAdmin.from('messages').insert({
+              conversation_id: currentConversationId,
+              agent_id: agentId,
+              role: 'assistant',
+              content: actionResponse,
+              confidence_score: 100,
+              metadata: {
+                action_type: detectedIntent,
+                action_result: actionResult,
+              },
+            })
+
+            // Update message count
+            await supabaseAdmin
+              .from('profiles')
+              .update({ message_count: profile.message_count + 1 })
+              .eq('id', agent.user_id)
+
+            return NextResponse.json({
+              message: actionResponse,
+              confidence: 100,
+              needsHandover: false,
+              conversationId: currentConversationId,
+              actionExecuted: true,
+              actionType: detectedIntent,
+            })
+          }
+        }
+      }
+    }
 
     // Generate embedding for the query
     const queryEmbedding = await generateEmbedding(sanitizedMessage)

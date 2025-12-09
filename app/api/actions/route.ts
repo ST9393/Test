@@ -1,5 +1,9 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import type { Database } from '@/lib/supabase/database.types'
+
+type AIActionInsert = Database['public']['Tables']['ai_actions']['Insert']
+type AIActionUpdate = Database['public']['Tables']['ai_actions']['Update']
 
 // Get all actions for an agent
 export async function GET(request: Request) {
@@ -56,14 +60,16 @@ export async function POST(request: Request) {
 
     if (existing) {
       // Update existing
+      const updateData: AIActionUpdate = {
+        config,
+        enabled,
+        name,
+        description,
+      }
+
       const { data, error } = await supabase
         .from('ai_actions')
-        .update({
-          config,
-          enabled,
-          name,
-          description,
-        })
+        .update(updateData)
         .eq('id', existing.id)
         .select()
         .single()
@@ -73,16 +79,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ action: data })
     } else {
       // Create new
+      const insertData: AIActionInsert = {
+        agent_id: agentId,
+        action_type: actionType,
+        config,
+        enabled,
+        name,
+        description,
+      }
+
       const { data, error } = await supabase
         .from('ai_actions')
-        .insert({
-          agent_id: agentId,
-          action_type: actionType,
-          config,
-          enabled,
-          name,
-          description,
-        })
+        .insert(insertData)
         .select()
         .single()
 

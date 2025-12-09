@@ -238,6 +238,8 @@ export interface Database {
           action_type: string
           config: Json
           enabled: boolean
+          name: string | null
+          description: string | null
           created_at: string
         }
         Insert: {
@@ -246,6 +248,8 @@ export interface Database {
           action_type: string
           config: Json
           enabled?: boolean
+          name?: string | null
+          description?: string | null
           created_at?: string
         }
         Update: {
@@ -254,6 +258,8 @@ export interface Database {
           action_type?: string
           config?: Json
           enabled?: boolean
+          name?: string | null
+          description?: string | null
           created_at?: string
         }
       }

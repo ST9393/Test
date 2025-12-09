@@ -1,5 +1,4 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
 // Get all actions for an agent
@@ -12,7 +11,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Agent ID requis' }, { status: 400 })
     }
 
-    const supabase = createRouteHandlerClient({ cookies })
+    const supabase = createSupabaseServerClient()
 
     const { data: actions, error } = await supabase
       .from('ai_actions')
@@ -45,7 +44,7 @@ export async function POST(request: Request) {
       )
     }
 
-    const supabase = createRouteHandlerClient({ cookies })
+    const supabase = createSupabaseServerClient()
 
     // Check if action already exists
     const { data: existing } = await supabase
@@ -110,7 +109,7 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'Action ID requis' }, { status: 400 })
     }
 
-    const supabase = createRouteHandlerClient({ cookies })
+    const supabase = createSupabaseServerClient()
 
     const { error } = await supabase
       .from('ai_actions')

@@ -1,5 +1,4 @@
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Bot, LayoutDashboard, MessageSquare, BarChart3, Settings, CreditCard, LogOut } from 'lucide-react'
@@ -10,7 +9,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const supabase = createServerComponentClient({ cookies })
+  const supabase = createSupabaseServerClient()
 
   const {
     data: { session },
@@ -28,7 +27,7 @@ export default async function DashboardLayout({
 
   const handleSignOut = async () => {
     'use server'
-    const supabase = createServerComponentClient({ cookies })
+    const supabase = createSupabaseServerClient()
     await supabase.auth.signOut()
     redirect('/')
   }

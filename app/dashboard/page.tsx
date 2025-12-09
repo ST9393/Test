@@ -1,4 +1,4 @@
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Plus, Bot, MessageSquare, TrendingUp, Zap } from 'lucide-react'
 
 export default async function DashboardPage() {
-  const supabase = createServerComponentClient({ cookies })
+  const supabase = createSupabaseServerClient()
 
   const {
     data: { session },

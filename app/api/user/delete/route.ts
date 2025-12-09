@@ -1,11 +1,10 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { createSupabaseAdmin } from '@/lib/supabase/client'
 
 export async function DELETE(request: Request) {
   try {
-    const supabase = createRouteHandlerClient({ cookies })
+    const supabase = createSupabaseServerClient()
 
     const {
       data: { session },

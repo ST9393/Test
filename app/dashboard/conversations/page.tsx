@@ -1,10 +1,10 @@
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatDateTimeFR } from '@/lib/utils'
 
 export default async function ConversationsPage() {
-  const supabase = createServerComponentClient({ cookies })
+  const supabase = createSupabaseServerClient()
 
   const {
     data: { session },

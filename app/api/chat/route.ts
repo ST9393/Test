@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     // Get agent
     const { data: agent } = await supabaseAdmin
       .from('agents')
-      .select('*, profiles!agents_user_id_fkey(*)')
+      .select('*')
       .eq('id', agentId)
       .single()
 
@@ -28,8 +28,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Agent non trouvé' }, { status: 404 })
     }
 
+    // Get user profile
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('*')
+      .eq('id', agent.user_id)
+      .single()
+
+    if (!profile) {
+      return NextResponse.json({ error: 'Profil non trouvé' }, { status: 404 })
+    }
+
     // Check rate limit
-    const profile = agent.profiles
     if (!checkRateLimit(profile.message_count, profile.message_limit)) {
       return NextResponse.json(
         { error: 'Limite de messages atteinte. Passez à Pro pour des messages illimités.' },

@@ -93,6 +93,11 @@ CREATE TABLE IF NOT EXISTS public.ai_actions (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Add name and description columns to ai_actions
+ALTER TABLE public.ai_actions
+ADD COLUMN IF NOT EXISTS name TEXT,
+ADD COLUMN IF NOT EXISTS description TEXT;
+
 -- Analytics aggregations table
 CREATE TABLE IF NOT EXISTS public.analytics (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,

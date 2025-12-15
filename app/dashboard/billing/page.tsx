@@ -11,6 +11,7 @@ export default function BillingPage() {
   const [profile, setProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [upgrading, setUpgrading] = useState(false)
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('annual')
   const { toast } = useToast()
   const supabase = createSupabaseClient()
 
@@ -38,6 +39,8 @@ export default function BillingPage() {
     try {
       const response = await fetch('/api/stripe/checkout', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ billingCycle }),
       })
 
       const data = await response.json()
@@ -55,6 +58,11 @@ export default function BillingPage() {
       setUpgrading(false)
     }
   }
+
+  const monthlyPrice = 19
+  const annualPrice = 15 // Prix mensuel avec engagement annuel
+  const annualTotal = annualPrice * 12
+  const savings = (monthlyPrice * 12) - annualTotal
 
   const handleManageSubscription = async () => {
     try {
@@ -161,10 +169,50 @@ export default function BillingPage() {
             </CardContent>
           </Card>
 
-          <Card className={profile?.subscription_tier === 'pro' ? 'border-2 border-blue-600' : ''}>
+          <Card className={profile?.subscription_tier === 'pro' ? 'border-2 border-blue-600' : 'border-2 border-blue-600'}>
             <CardHeader>
-              <CardTitle className="text-2xl">Pro</CardTitle>
-              <div className="text-4xl font-bold">19€<span className="text-lg font-normal text-gray-500">/mois</span></div>
+              <CardTitle className="text-2xl flex items-center gap-2">
+                Pro
+                {billingCycle === 'annual' && (
+                  <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                    -{Math.round((savings / (monthlyPrice * 12)) * 100)}%
+                  </span>
+                )}
+              </CardTitle>
+
+              {/* Billing Toggle */}
+              {profile?.subscription_tier !== 'pro' && (
+                <div className="flex items-center gap-2 mt-4 p-1 bg-gray-100 rounded-lg w-fit">
+                  <button
+                    onClick={() => setBillingCycle('monthly')}
+                    className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                      billingCycle === 'monthly' ? 'bg-white shadow font-medium' : 'text-gray-600'
+                    }`}
+                  >
+                    Mensuel
+                  </button>
+                  <button
+                    onClick={() => setBillingCycle('annual')}
+                    className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                      billingCycle === 'annual' ? 'bg-white shadow font-medium' : 'text-gray-600'
+                    }`}
+                  >
+                    Annuel
+                  </button>
+                </div>
+              )}
+
+              <div className="mt-3">
+                <div className="text-4xl font-bold">
+                  {billingCycle === 'annual' ? annualPrice : monthlyPrice}€
+                  <span className="text-lg font-normal text-gray-500">/mois</span>
+                </div>
+                {billingCycle === 'annual' && (
+                  <p className="text-sm text-green-600 mt-1">
+                    Facturé {annualTotal}€/an (économisez {savings}€)
+                  </p>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               <ul className="space-y-3 mb-6">
@@ -182,27 +230,22 @@ export default function BillingPage() {
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="h-5 w-5 text-green-600" />
-                  <span>AI Actions (Calendly, Zapier)</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="h-5 w-5 text-green-600" />
-                  <span>Analytics avancées</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="h-5 w-5 text-green-600" />
                   <span>Support prioritaire</span>
                 </li>
               </ul>
 
               {profile?.subscription_tier !== 'pro' && (
-                <Button onClick={handleUpgrade} disabled={upgrading} className="w-full">
+                <Button onClick={handleUpgrade} disabled={upgrading} className="w-full" size="lg">
                   {upgrading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Chargement...
                     </>
                   ) : (
-                    'Passer à Pro'
+                    <>
+                      <Zap className="mr-2 h-4 w-4" />
+                      Passer à Pro
+                    </>
                   )}
                 </Button>
               )}

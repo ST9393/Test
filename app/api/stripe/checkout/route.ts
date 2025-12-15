@@ -5,6 +5,8 @@ import { createCheckoutSession } from '@/lib/stripe/client'
 export async function POST(request: Request) {
   try {
     const supabase = createSupabaseServerClient()
+    const body = await request.json().catch(() => ({}))
+    const billingCycle = body.billingCycle || 'annual'
 
     const {
       data: { session },
@@ -31,7 +33,8 @@ export async function POST(request: Request) {
       session.user.id,
       session.user.email!,
       `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing?success=true`,
-      `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing?canceled=true`
+      `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing?canceled=true`,
+      billingCycle
     )
 
     return NextResponse.json({ url: checkoutSession.url })

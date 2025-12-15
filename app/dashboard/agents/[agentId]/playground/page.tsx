@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/components/ui/use-toast'
-import { ArrowLeft, Send, Loader2, AlertCircle } from 'lucide-react'
+import { ArrowLeft, Send, Loader2, AlertCircle, Zap } from 'lucide-react'
 import Link from 'next/link'
 import { generateSessionId } from '@/lib/utils'
 
@@ -17,6 +17,48 @@ interface Message {
   confidence?: number
 }
 
+// Modal Upgrade
+function UpgradeModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  if (!isOpen) return null
+
+  const handleUpgrade = async () => {
+    const response = await fetch('/api/stripe/checkout', { method: 'POST' })
+    const data = await response.json()
+    if (data.url) window.location.href = data.url
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 max-w-md mx-4">
+        <div className="text-center">
+          <div className="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+            <Zap className="h-6 w-6 text-blue-600" />
+          </div>
+          <h3 className="text-lg font-semibold mb-2">Limite de messages atteinte</h3>
+          <p className="text-gray-600 mb-6">
+            Vous avez utilisé vos 100 messages gratuits ce mois-ci.
+            Passez à Pro pour des messages illimités.
+          </p>
+          <div className="space-y-3">
+            <button
+              onClick={handleUpgrade}
+              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700"
+            >
+              Passer à Pro - 19€/mois
+            </button>
+            <button
+              onClick={onClose}
+              className="w-full text-gray-600 py-2 px-4 hover:text-gray-800"
+            >
+              Plus tard
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function PlaygroundPage({ params }: { params: { agentId: string } }) {
   const [agent, setAgent] = useState<any>(null)
   const [messages, setMessages] = useState<Message[]>([])
@@ -24,6 +66,7 @@ export default function PlaygroundPage({ params }: { params: { agentId: string }
   const [loading, setLoading] = useState(false)
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [sessionId] = useState(generateSessionId())
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
@@ -93,6 +136,10 @@ export default function PlaygroundPage({ params }: { params: { agentId: string }
       const data = await response.json()
 
       if (!response.ok) {
+        if (response.status === 429) {
+          setShowUpgradeModal(true)
+          return
+        }
         throw new Error(data.error || 'Erreur')
       }
 
@@ -225,11 +272,11 @@ export default function PlaygroundPage({ params }: { params: { agentId: string }
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder="Tapez votre message..."
-                  disabled={loading || !agent.is_trained}
+                  disabled={loading}
                 />
                 <Button
                   onClick={handleSend}
-                  disabled={loading || !input.trim() || !agent.is_trained}
+                  disabled={loading || !input.trim()}
                 >
                   <Send className="h-4 w-4" />
                 </Button>
@@ -238,6 +285,8 @@ export default function PlaygroundPage({ params }: { params: { agentId: string }
           </CardContent>
         </Card>
       </div>
+
+      <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />
     </div>
   )
 }

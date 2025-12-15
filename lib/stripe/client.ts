@@ -9,8 +9,13 @@ export async function createCheckoutSession(
   userId: string,
   userEmail: string,
   successUrl: string,
-  cancelUrl: string
+  cancelUrl: string,
+  billingCycle: 'monthly' | 'annual' = 'annual'
 ) {
+  const priceId = billingCycle === 'annual'
+    ? process.env.STRIPE_PRO_ANNUAL_PRICE_ID || process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID!
+    : process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID!
+
   const session = await stripe.checkout.sessions.create({
     customer_email: userEmail,
     client_reference_id: userId,
@@ -18,7 +23,7 @@ export async function createCheckoutSession(
     mode: 'subscription',
     line_items: [
       {
-        price: process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID!,
+        price: priceId,
         quantity: 1,
       },
     ],
@@ -30,6 +35,7 @@ export async function createCheckoutSession(
     subscription_data: {
       metadata: {
         userId,
+        billingCycle,
       },
     },
   })

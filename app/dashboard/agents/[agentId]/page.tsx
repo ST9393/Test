@@ -9,15 +9,15 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useToast } from '@/components/ui/use-toast'
-import { ArrowLeft, Upload, Link as LinkIcon, FileText, Trash2, Loader2 } from 'lucide-react'
+import { ArrowLeft, Upload, Link as LinkIcon, FileText, Trash2, Loader2, Copy, Check } from 'lucide-react'
 import Link from 'next/link'
-import { ActionsConfig } from '@/components/ai-actions/ActionsConfig'
 
 export default function AgentPage({ params }: { params: { agentId: string } }) {
   const [agent, setAgent] = useState<any>(null)
   const [documents, setDocuments] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   // Document upload states
   const [urlToAdd, setUrlToAdd] = useState('')
@@ -280,8 +280,6 @@ export default function AgentPage({ params }: { params: { agentId: string } }) {
         <Tabs defaultValue="training">
           <TabsList>
             <TabsTrigger value="training">Entraînement</TabsTrigger>
-            <TabsTrigger value="actions">Actions IA</TabsTrigger>
-            <TabsTrigger value="settings">Paramètres</TabsTrigger>
             <TabsTrigger value="embed">Intégration</TabsTrigger>
           </TabsList>
 
@@ -385,40 +383,47 @@ export default function AgentPage({ params }: { params: { agentId: string } }) {
             </Card>
           </TabsContent>
 
-          <TabsContent value="actions">
-            <ActionsConfig agentId={params.agentId} />
-          </TabsContent>
-
-          <TabsContent value="settings">
-            <Card>
-              <CardHeader>
-                <CardTitle>Paramètres de l'agent</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-500">Paramètres à venir...</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
           <TabsContent value="embed">
             <Card>
               <CardHeader>
                 <CardTitle>Intégrer le widget</CardTitle>
                 <CardDescription>
-                  Copiez ce code dans votre site web
+                  Copiez ce code et collez-le avant la balise &lt;/body&gt; de votre site
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <pre className="bg-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+                <div className="relative">
+                  <pre className="bg-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 {`<script>
   (function() {
     var script = document.createElement('script');
-    script.src = '${process.env.NEXT_PUBLIC_APP_URL}/widget.js';
+    script.src = '${typeof window !== 'undefined' ? window.location.origin : 'https://votre-domaine.com'}/widget.js';
     script.setAttribute('data-agent-id', '${agent.id}');
     document.body.appendChild(script);
   })();
 </script>`}
-                </pre>
+                  </pre>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="absolute top-2 right-2"
+                    onClick={() => {
+                      const code = `<script>
+  (function() {
+    var script = document.createElement('script');
+    script.src = '${typeof window !== 'undefined' ? window.location.origin : ''}/widget.js';
+    script.setAttribute('data-agent-id', '${agent.id}');
+    document.body.appendChild(script);
+  })();
+</script>`
+                      navigator.clipboard.writeText(code)
+                      setCopied(true)
+                      setTimeout(() => setCopied(false), 2000)
+                    }}
+                  >
+                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
